@@ -23,14 +23,19 @@ void ImChat::SetMessage(HWND hWnd1, UINT message1, WPARAM wParam1, LPARAM lParam
 void ImHead::ImHead_Windows()
 {
 	static int cxClient, cyClient;
-	//static HWND Head_win;
+	static HWND Head_win;
 	HDC hdc;
 
-	RECT rect;
+	static RECT rect;
 	HRGN hRgn;
 	static POINT point;
 	static int cx, cy;
 	mygdiplus Gdiimg;
+	CONST WCHAR* imgstr = TEXT("img/logo.png");
+	Rect imglogo = { 0,0,70,60 };
+
+	RECT ImgExit = { 0,0,15,15};
+	HBRUSH Brush;
 
 	switch(message)
 	{
@@ -41,22 +46,31 @@ void ImHead::ImHead_Windows()
 		SetWindowRgn(hWnd, hRgn, TRUE);
 
 
-		//Head_win = CreateWindow(
+		Head_win = CreateWindow(
+			TEXT("Edit"),		//窗口类名字
+			NULL,					//窗口标题
+			WS_CHILD,	//窗口外观样式 比如需要变宽或者标题之类的
+			70,						//默认位置 x
+			20,						//默认位置 y
+			258,					//默认宽度 x
+			20,						//默认高度 y
+			hWnd,		  			//当前窗口父窗口
+			NULL,		  			//窗口菜单句柄  也就是ID
+			ImChat_Global_Instance, //当前窗口实例
+			NULL		  			//lParam
+		);
 
-		//	TEXT("MyWndClass"),		//窗口类名字
-		//	NULL,					//窗口标题
-		//	WS_CHILD| WS_BORDER,	//窗口外观样式 比如需要变宽或者标题之类的
-		//	0,						//默认位置 x
-		//	0,						//默认位置 y
-		//	950,					//默认宽度 x
-		//	80,						//默认高度 y
-		//	hWnd,		  			//当前窗口父窗口
-		//	NULL,		  			//窗口菜单句柄  也就是ID
-		//	ImChat_Global_Instance, //当前窗口实例
-		//	NULL		  			//lParam
-		//);
-		//UpdateWindow(Head_win);
-		//ShowWindow(Head_win, SW_SHOW);
+		GetWindowRect(Head_win, &rect);
+		hRgn = CreateRoundRectRgn(0, 0, rect.right - rect.left, rect.bottom - rect.top, 20, 20);
+		SetWindowRgn(Head_win, hRgn, TRUE);
+
+
+		SetWindowLong(Head_win, GWL_EXSTYLE, GetWindowLong(hWnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+		SetLayeredWindowAttributes(hWnd, 0, 200, LWA_ALPHA);
+
+
+		SetWindowLong(Head_win, GWL_STYLE, COLOR_WINDOW + 2);
+		UpdateWindow(Head_win);
 
 		break;
 	case WM_SIZE:
@@ -80,7 +94,7 @@ void ImHead::ImHead_Windows()
 		PAINTSTRUCT ps;
 
 		HPEN hPen;
-		HPEN hPenOld;
+		HPEN hPenOld,hPenOld1;
 
 		hdc=BeginPaint(hWnd, &ps);
 
@@ -93,11 +107,49 @@ void ImHead::ImHead_Windows()
 		SelectObject(hdc, hPenOld);
 		DeleteObject(hPen);
 
+		//logo
+		imgIm(hdc, imglogo, imgstr);
+
+		//搜索框
+		MoveWindow(Head_win, 80, 23, 258, 20, TRUE);
+
+		hPen = CreatePen(PS_SOLID, 1, RGB(236, 236, 236));
+		hPenOld = (HPEN)SelectObject(hdc, hPen);
+
+		RoundRect(hdc, 65, 10, 350, 50, 40, 40);
+
+		SelectObject(hdc, hPenOld);
+		DeleteObject(hPen);
 
 
-		imgIm(hdc);
+		//隐藏和退出
+		GetWindowRect(hWnd, &rect);
+
+
+
+		//画笔(描边)
+		hPen = CreatePen(PS_SOLID, 1, RGB(71, 222, 0));
+		hPenOld1 = (HPEN)SelectObject(hdc, hPen);
+
+		//画刷(填充)
+		Brush =CreateSolidBrush(RGB(71, 222, 0));
+		hPenOld = (HPEN)SelectObject(hdc, Brush);
+
+		SetWindowOrgEx(hdc, -850, -10, &point);
+		Ellipse(hdc, ImgExit.left, ImgExit.top, ImgExit.right, ImgExit.bottom);
+
+		SelectObject(hdc, hPenOld);
+		DeleteObject(Brush);
+
+
+		SelectObject(hdc, hPenOld1);
+		DeleteObject(hPen);
+
+		ShowWindow(Head_win, SW_SHOW);
+
+
 		//文字测试
-		ImHead_string(hdc, cxClient, cyClient, 59, 106);
+		//ImHead_string(hdc, cxClient, cyClient, 59, 106);
 
 		EndPaint(hWnd, &ps);
 		break;
@@ -111,14 +163,12 @@ void ImHead::ImHead_Windows()
 }
 
 
-void ImHead::imgIm(HDC & hdc)
+void ImHead::imgIm(HDC & hdc, Rect img_rect, CONST WCHAR* imgstring)
 {
 
-	Rect		img_rect(20, 20, 73, 73);
 	Graphics	grpx(hdc);
 
-
-	Image*		pImage = Gdiplus::Image::FromFile(TEXT("img/logo.png"));
+	Image*		pImage = Gdiplus::Image::FromFile(imgstring);
 	grpx.DrawImage(pImage, img_rect);
 
 	delete pImage;

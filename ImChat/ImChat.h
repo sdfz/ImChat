@@ -53,6 +53,6 @@ public:
 	void ImHead_string(HDC hd, int width, int height, int x, int y);
 
 	
-	void imgIm(HDC & hdc);
+	void imgIm(HDC & hdc, Rect img_rect1, CONST WCHAR* imgstring);
 };
 #endif
