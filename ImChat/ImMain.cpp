@@ -14,7 +14,7 @@ WNDCLASS wc1;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-
+CONST WCHAR* win_class = TEXT("MyWndClass");
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int nCmdShow)			    //如何进行显示 最大化还是最小化
 {					//实例句柄                                                      窗口最大化还是最小化显示
@@ -35,16 +35,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);	//鼠标指针箭头 系统默认
 	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);	//窗口背景
 	wc.lpszMenuName = NULL;							//菜单
-	wc.lpszClassName = TEXT("MyWndClass");			//窗口名字
+	wc.lpszClassName = win_class;			//窗口名字
 
 	wc1 = wc;										//2 注册窗口类
 	RegisterClass(&wc);
 
 	//3 创建窗口
 	hwnd = CreateWindow(
-		TEXT("MyWndClass"),		//窗口类名字
+		win_class,				//窗口类名字
 		TEXT("Hello WIN32"),	//窗口标题
-		WS_POPUP,	//窗口外观样式 比如需要变宽或者标题之类的
+		WS_POPUP,				//窗口外观样式 比如需要变宽或者标题之类的
 		500,					//默认位置 x
 		300,					//默认位置 y
 		950,					//默认宽度 x
@@ -66,14 +66,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 		TranslateMessage(&msg);//翻译键盘消息
 		DispatchMessage(&msg);//转发到窗口过程;
 	}
-	return msg.wParam;
+	return (int)msg.wParam;
 }
 
 
-void ImChatfun(HWND hWnd1, UINT message1, WPARAM wParam1, LPARAM lParam1, HINSTANCE Global_Instance)
+void ImChatfun(HWND hWnd1, UINT message1, WPARAM wParam1, LPARAM lParam1, HINSTANCE Global_Instance, WNDCLASS wcc,CONST WCHAR* win_clasS)
 {
 	ImChat ImChatStart;
-	ImChatStart.SetMessage(hWnd1, message1, wParam1, lParam1, Global_Instance, wc1);
+	ImChatStart.SetMessage(hWnd1, message1, wParam1, lParam1, Global_Instance, wcc, win_clasS);
 }
 
 void ImHeafun()
@@ -82,13 +82,20 @@ void ImHeafun()
 	ImHeadStart.ImHead_Windows();
 }
 
+void ImBodyfun()
+{
+	ImBody ImBodyStart;
+	ImBodyStart.ImBody_Windows();
+}
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	
-	ImChatfun(hwnd, message, wParam, lParam, Global_Instance);
+	ImChatfun(hwnd, message, wParam, lParam, Global_Instance, wc1, win_class);
 	ImHeafun();
 
+	ImChatfun(hwnd, message, wParam, lParam, Global_Instance, wc1, win_class);
+	ImBodyfun();
+	
 	switch (message)
 	{
 	case WM_DESTROY:
@@ -96,7 +103,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	default:
 		return DefWindowProc(hwnd, message, wParam, lParam);
-		
 	}
 	return 0;
 }
